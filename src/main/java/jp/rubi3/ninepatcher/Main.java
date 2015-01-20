@@ -1,4 +1,5 @@
-import jp.rubi3.ninepatcher.Patcher;
+package jp.rubi3.ninepatcher;
+
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FilenameUtils;
 import static java.lang.System.out;
@@ -9,7 +10,7 @@ import java.util.stream.IntStream;
 /**
  * Created by kikuchi on 2015/01/20.
  */
-public class NinePatcher {
+public class Main {
     private static final String OPTION_IN_FILE = "i";
     private static final String OPTION_STRETCHABLE_AREA_PADDING = "s";
     private static final String OPTION_CONTENT_PADDING = "c";
@@ -43,7 +44,7 @@ public class NinePatcher {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             HelpFormatter help = new HelpFormatter();
-            help.printHelp(NinePatcher.class.getSimpleName(), options, true);
+            help.printHelp(Main.class.getSimpleName(), options, true);
             return;
         }
 
