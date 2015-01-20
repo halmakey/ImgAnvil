@@ -14,6 +14,7 @@ public class Main {
     private static final String OPTION_IN_FILE = "i";
     private static final String OPTION_STRETCHABLE_AREA_PADDING = "s";
     private static final String OPTION_CONTENT_PADDING = "c";
+    private static final String OPTION_DELETE_INFILE = "d";
 
     public static void main(String[] args) {
 
@@ -36,6 +37,9 @@ public class Main {
                     .withDescription("Padding for Content area.")
                     .create(OPTION_CONTENT_PADDING));
 
+            options.addOption(OptionBuilder.withArgName("delete")
+                    .withDescription("Delete infile.")
+                    .create(OPTION_DELETE_INFILE));
         }
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = null;
@@ -87,6 +91,12 @@ public class Main {
 
         if (patcher.saveTo(new File(outFile)).isSuccessful()) {
             out.println(outFile + " success");
+            
+            if (cmd.hasOption(OPTION_DELETE_INFILE)) {
+                if (!new File(inFile).delete()) {
+                    out.println(inFile + " deletion failed.");
+                }
+            }
         } else {
             out.println(outFile + " failed " + patcher.getException().getLocalizedMessage());
         }
