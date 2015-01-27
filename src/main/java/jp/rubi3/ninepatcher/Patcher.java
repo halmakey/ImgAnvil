@@ -77,6 +77,7 @@ public class Patcher {
         }
 
         try {
+            file.getParentFile().mkdirs();
             ImageIO.write(canvas, "png", file);
         } catch (IOException e) {
             exception = e;

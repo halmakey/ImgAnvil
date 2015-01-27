@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
  */
 public class Main {
     private static final String OPTION_IN_FILE = "i";
+    private static final String OPTION_OUT_FILE = "o";
     private static final String OPTION_STRETCHABLE_AREA_PADDING = "s";
     private static final String OPTION_CONTENT_PADDING = "c";
     private static final String OPTION_DELETE_INFILE = "d";
@@ -26,6 +27,11 @@ public class Main {
                     .withDescription("入力ファイル名")
                     .isRequired()
                     .create(OPTION_IN_FILE));
+
+            options.addOption(OptionBuilder.withArgName("path")
+                    .hasArg()
+                    .withDescription("出力ファイル名")
+                    .create(OPTION_OUT_FILE));
 
             options.addOption(OptionBuilder.withArgName("left top right bottom")
                     .hasArgs(4)
@@ -54,8 +60,10 @@ public class Main {
 
         String inFile = cmd.getOptionValue(OPTION_IN_FILE);
         String extension = FilenameUtils.getExtension(inFile);
-        String outFile = FilenameUtils.removeExtension(inFile);
-        outFile += ".9." + extension;
+        String outFile = cmd.getOptionValue(OPTION_OUT_FILE);
+        if (outFile == null) {
+            outFile = FilenameUtils.removeExtension(inFile) + ".9." + extension;
+        }
 
         Patcher patcher = new Patcher(new File(inFile));
         
