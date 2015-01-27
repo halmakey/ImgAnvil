@@ -36,6 +36,10 @@ public class Patcher {
     }
     
     public Patcher content(int left, int top, int right, int bottom) {
+        if (exception != null) {
+            return this;
+        }
+
         int minX = 1;
         int minY = 1;
         int maxX = canvas.getWidth() - 2;
@@ -50,6 +54,10 @@ public class Patcher {
     }
 
     public Patcher padding(int left, int top, int right, int bottom) {
+        if (exception != null) {
+            return this;
+        }
+        
         int minX = 1;
         int minY = 1;
         int maxX = canvas.getWidth() - 2;
@@ -64,6 +72,10 @@ public class Patcher {
     }
     
     public Patcher saveTo(File file) {
+        if (exception != null) {
+            return this;
+        }
+
         try {
             ImageIO.write(canvas, "png", file);
         } catch (IOException e) {
