@@ -11,6 +11,10 @@ import java.util.stream.IntStream;
  * Created by kikuchi on 2015/01/20.
  */
 public class Main {
+    static {
+        System.setProperty("java.awt.headless", "true");
+    }
+    
     private static final String OPTION_IN_FILE = "i";
     private static final String OPTION_OUT_FILE = "o";
     private static final String OPTION_STRETCHABLE_AREA_PADDING = "s";
