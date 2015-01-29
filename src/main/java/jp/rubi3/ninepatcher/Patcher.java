@@ -7,6 +7,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Created by kikuchi on 2015/01/20.
@@ -42,35 +45,56 @@ public class Patcher {
 
         int minX = 1;
         int minY = 1;
-        int maxX = canvas.getWidth() - 2;
-        int maxY = canvas.getHeight() - 2;
+        int maxX = canvas.getWidth() - 1;
+        int maxY = canvas.getHeight() - 1;
         int infoY = canvas.getHeight() - 1;
         int infoX = canvas.getWidth() - 1;
-        
-        graphics.setColor(Color.black);
-        graphics.drawLine(minX + left, infoY, maxX - right, infoY);
-        graphics.drawLine(infoX, minY + top, infoX, maxY - bottom);
+
+        IntStream.range(minX + left, maxX - right).forEach(value -> canvas.setRGB(value, infoY, 0xFF000000));
+        IntStream.range(minY + top, maxY - bottom).forEach(value -> canvas.setRGB(infoX, value, 0xFF000000));
+
         return this;
     }
 
-    public Patcher padding(int left, int top, int right, int bottom) {
+    public Patcher innerStretch(int left, int top, int right, int bottom) {
         if (exception != null) {
             return this;
         }
         
         int minX = 1;
         int minY = 1;
-        int maxX = canvas.getWidth() - 2;
-        int maxY = canvas.getHeight() - 2;
+        int maxX = canvas.getWidth() - 1;
+        int maxY = canvas.getHeight() - 1;
+        int infoY = 0;
+        int infoX = 0;
+        
+        IntStream.range(minX + left, maxX - right).forEach(value -> canvas.setRGB(value, infoY, 0xFF000000));
+        IntStream.range(minY + top, maxY - bottom).forEach(value -> canvas.setRGB(infoX, value, 0xFF000000));
+
+        return this;
+    }
+
+    public Patcher outerStretch(int left, int top, int right, int bottom) {
+        if (exception != null) {
+            return this;
+        }
+
+        int minX = 1;
+        int minY = 1;
+        int maxX = canvas.getWidth() - 1;
+        int maxY = canvas.getHeight() - 1;
         int infoY = 0;
         int infoX = 0;
 
-        graphics.setColor(Color.black);
-        graphics.drawLine(minX + left, infoY, maxX - right, infoY);
-        graphics.drawLine(infoX, minY + top, infoX, maxY - bottom);
+        IntStream.range(minX, minX + left).forEach(value -> canvas.setRGB(value, infoY, 0xFF000000));
+        IntStream.range(maxX - right, maxX).forEach(value -> canvas.setRGB(value, infoY, 0xFF000000));
+
+        IntStream.range(minY, minY + top).forEach(value -> canvas.setRGB(infoX, value, 0xFF000000));
+        IntStream.range(maxY - bottom, maxY).forEach(value -> canvas.setRGB(infoX, value, 0xFF000000));
+
         return this;
     }
-    
+
     public Patcher saveTo(File file) {
         if (exception != null) {
             return this;

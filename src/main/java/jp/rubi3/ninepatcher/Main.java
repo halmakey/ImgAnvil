@@ -17,7 +17,8 @@ public class Main {
     
     private static final String OPTION_IN_FILE = "i";
     private static final String OPTION_OUT_FILE = "o";
-    private static final String OPTION_STRETCHABLE_AREA_PADDING = "s";
+    private static final String OPTION_INNER_STRETCH = "si";
+    private static final String OPTION_OUTER_STRETCH = "so";
     private static final String OPTION_CONTENT_PADDING = "c";
     private static final String OPTION_DELETE_INFILE = "d";
 
@@ -39,8 +40,13 @@ public class Main {
 
             options.addOption(OptionBuilder.withArgName("left top right bottom")
                     .hasArgs(4)
-                    .withDescription("Padding for Stretchable area.")
-                    .create(OPTION_STRETCHABLE_AREA_PADDING));
+                    .withDescription("Inner Stretchable area.")
+                    .create(OPTION_INNER_STRETCH));
+
+            options.addOption(OptionBuilder.withArgName("left top right bottom")
+                    .hasArgs(4)
+                    .withDescription("Outer Stretchable area.")
+                    .create(OPTION_OUTER_STRETCH));
 
             options.addOption(OptionBuilder.withArgName("left top right bottom")
                     .hasArgs(4)
@@ -71,8 +77,8 @@ public class Main {
 
         Patcher patcher = new Patcher(new File(inFile));
         
-        if (cmd.hasOption(OPTION_STRETCHABLE_AREA_PADDING)) {
-            String values[] = cmd.getOptionValues(OPTION_STRETCHABLE_AREA_PADDING);
+        if (cmd.hasOption(OPTION_INNER_STRETCH)) {
+            String values[] = cmd.getOptionValues(OPTION_INNER_STRETCH);
             int edges[] = new int[args.length];
             IntStream.range(0, values.length).forEach(i -> {
                 try {
@@ -81,11 +87,22 @@ public class Main {
                     edges[i] = 0;
                 }
             });
-            patcher.padding(edges[0], edges[1], edges[2], edges[3]);
-        } else {
-            patcher.padding(0, 0, 0, 0);
+            patcher.innerStretch(edges[0], edges[1], edges[2], edges[3]);
         }
-        
+
+        if (cmd.hasOption(OPTION_OUTER_STRETCH)) {
+            String values[] = cmd.getOptionValues(OPTION_OUTER_STRETCH);
+            int edges[] = new int[args.length];
+            IntStream.range(0, values.length).forEach(i -> {
+                try {
+                    edges[i] = Integer.parseInt(values[i]);
+                } catch (NumberFormatException e) {
+                    edges[i] = 0;
+                }
+            });
+            patcher.outerStretch(edges[0], edges[1], edges[2], edges[3]);
+        }
+
         if (cmd.hasOption(OPTION_CONTENT_PADDING)) {
             String values[] = cmd.getOptionValues(OPTION_CONTENT_PADDING);
             int edges[] = new int[args.length];
