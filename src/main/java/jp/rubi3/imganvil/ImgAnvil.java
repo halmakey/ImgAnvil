@@ -1,8 +1,8 @@
-package jp.rubi3.ninepatcher;
+package jp.rubi3.imganvil;
 
-import jp.rubi3.ninepatcher.anvil.AbstractPatch;
-import jp.rubi3.ninepatcher.anvil.NinePatch;
-import jp.rubi3.ninepatcher.anvil.NopPatch;
+import jp.rubi3.imganvil.patch.AbstractPatch;
+import jp.rubi3.imganvil.patch.NinePatch;
+import jp.rubi3.imganvil.patch.NopPatch;
 
 import javax.imageio.ImageIO;
 import java.io.File;

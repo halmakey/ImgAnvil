@@ -1,9 +1,9 @@
-package jp.rubi3.ninepatcher;
+package jp.rubi3.imganvil;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import jp.rubi3.ninepatcher.anvil.NinePatch;
+import jp.rubi3.imganvil.patch.NinePatch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +30,12 @@ public class Main {
             jc.addCommand(ninePatchParams);
             jc.parse(args);
 
-            switch (jc.getParsedCommand()) {
+            String command = jc.getParsedCommand();
+            if (command == null) {
+                command = "";
+            }
+
+            switch (command) {
                 case "trim":
                     trim(trimParams);
                     break;

@@ -1,4 +1,4 @@
-package jp.rubi3.ninepatcher.anvil;
+package jp.rubi3.imganvil.patch;
 
 import org.apache.commons.io.FilenameUtils;
 
