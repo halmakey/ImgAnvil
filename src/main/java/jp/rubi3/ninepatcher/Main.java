@@ -1,11 +1,14 @@
 package jp.rubi3.ninepatcher;
 
-import org.apache.commons.cli.*;
-import org.apache.commons.io.FilenameUtils;
-import static java.lang.System.out;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import jp.rubi3.ninepatcher.anvil.NinePatch;
 
 import java.io.File;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Created by kikuchi on 2015/01/20.
@@ -14,121 +17,164 @@ public class Main {
     static {
         System.setProperty("java.awt.headless", "true");
     }
-    
-    private static final String OPTION_IN_FILE = "i";
-    private static final String OPTION_OUT_FILE = "o";
-    private static final String OPTION_INNER_STRETCH = "si";
-    private static final String OPTION_OUTER_STRETCH = "so";
-    private static final String OPTION_CONTENT_PADDING = "c";
-    private static final String OPTION_DELETE_INFILE = "d";
 
     public static void main(String[] args) {
+        JCommander jc = new JCommander();
+        jc.setProgramName("ImgAnvil");
 
-        Options options = new Options();
-
-        {
-            options.addOption(OptionBuilder.withArgName("path")
-                    .hasArg()
-                    .withDescription("入力ファイル名")
-                    .isRequired()
-                    .create(OPTION_IN_FILE));
-
-            options.addOption(OptionBuilder.withArgName("path")
-                    .hasArg()
-                    .withDescription("出力ファイル名")
-                    .create(OPTION_OUT_FILE));
-
-            options.addOption(OptionBuilder.withArgName("left top right bottom")
-                    .hasArgs(4)
-                    .withDescription("Inner Stretchable area.")
-                    .create(OPTION_INNER_STRETCH));
-
-            options.addOption(OptionBuilder.withArgName("left top right bottom")
-                    .hasArgs(4)
-                    .withDescription("Outer Stretchable area.")
-                    .create(OPTION_OUTER_STRETCH));
-
-            options.addOption(OptionBuilder.withArgName("left top right bottom")
-                    .hasArgs(4)
-                    .withDescription("Padding for Content area.")
-                    .create(OPTION_CONTENT_PADDING));
-
-            options.addOption(OptionBuilder.withArgName("delete")
-                    .withDescription("Delete infile.")
-                    .create(OPTION_DELETE_INFILE));
-        }
-        CommandLineParser parser = new PosixParser();
-        CommandLine cmd = null;
+        TrimParams trimParams = new TrimParams();
+        NinePatchParams ninePatchParams = new NinePatchParams();
 
         try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            HelpFormatter help = new HelpFormatter();
-            help.printHelp(Main.class.getSimpleName(), options, true);
+            jc.addCommand(trimParams);
+            jc.addCommand(ninePatchParams);
+            jc.parse(args);
+
+            switch (jc.getParsedCommand()) {
+                case "trim":
+                    trim(trimParams);
+                    break;
+                case "nine":
+                    nine(ninePatchParams);
+                    break;
+                default:
+                    jc.usage();
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getLocalizedMessage());
+            jc.usage();
             return;
         }
+    }
+    
+    private static void trim(TrimParams params) {
+        params.fileParamList().forEach(new Consumer<FileParam>() {
+            @Override
+            public void accept(FileParam fileParam) {
+                ImgAnvil anvil = new ImgAnvil(fileParam.inFile);
+                anvil.saveTo(fileParam.outFile);
 
-        String inFile = cmd.getOptionValue(OPTION_IN_FILE);
-        String extension = FilenameUtils.getExtension(inFile);
-        String outFile = cmd.getOptionValue(OPTION_OUT_FILE);
-        if (outFile == null) {
-            outFile = FilenameUtils.removeExtension(inFile) + ".9." + extension;
-        }
-
-        Patcher patcher = new Patcher(new File(inFile));
-        
-        if (cmd.hasOption(OPTION_INNER_STRETCH)) {
-            String values[] = cmd.getOptionValues(OPTION_INNER_STRETCH);
-            int edges[] = new int[args.length];
-            IntStream.range(0, values.length).forEach(i -> {
-                try {
-                    edges[i] = Integer.parseInt(values[i]);
-                } catch (NumberFormatException e) {
-                    edges[i] = 0;
+                if (anvil.isSuccessful() && !anvil.equalsInOutFile() && !params.nodelete) {
+                    fileParam.inFile.delete();
                 }
-            });
-            patcher.innerStretch(edges[0], edges[1], edges[2], edges[3]);
-        }
 
-        if (cmd.hasOption(OPTION_OUTER_STRETCH)) {
-            String values[] = cmd.getOptionValues(OPTION_OUTER_STRETCH);
-            int edges[] = new int[args.length];
-            IntStream.range(0, values.length).forEach(i -> {
-                try {
-                    edges[i] = Integer.parseInt(values[i]);
-                } catch (NumberFormatException e) {
-                    edges[i] = 0;
-                }
-            });
-            patcher.outerStretch(edges[0], edges[1], edges[2], edges[3]);
-        }
-
-        if (cmd.hasOption(OPTION_CONTENT_PADDING)) {
-            String values[] = cmd.getOptionValues(OPTION_CONTENT_PADDING);
-            int edges[] = new int[args.length];
-            IntStream.range(0, values.length).forEach(i -> {
-                try {
-                    edges[i] = Integer.parseInt(values[i]);
-                } catch (NumberFormatException e) {
-                    edges[i] = 0;
-                }
-            });
-            patcher.content(edges[0], edges[1], edges[2], edges[3]);
-        } else {
-            patcher.content(0, 0, 0, 0);
-        }
-
-        if (patcher.saveTo(new File(outFile)).isSuccessful()) {
-            out.println(outFile + " success");
-            
-            if (cmd.hasOption(OPTION_DELETE_INFILE)) {
-                if (!new File(inFile).delete()) {
-                    out.println(inFile + " deletion failed.");
-                }
+                anvil.printState();
             }
-        } else {
-            out.println(outFile + " failed " + patcher.getException().getLocalizedMessage());
-        }
+        });
         
+    }
+    
+    private static void nine(NinePatchParams params) {
+        params.fileParamList().forEach(new Consumer<FileParam>() {
+            @Override
+            public void accept(FileParam fileParam) {
+                ImgAnvil anvil = new ImgAnvil(fileParam.inFile);
+                NinePatch patch = anvil.ninePatch();
+                
+                if (params.contentArea != null) {
+                    patch.content(
+                            params.contentArea.get(0).intValue(),
+                            params.contentArea.get(1).intValue(),
+                            params.contentArea.get(2).intValue(),
+                            params.contentArea.get(3).intValue()
+                    );
+                }
+                
+                if (params.innerStretch != null) {
+                    patch.innerStretch(
+                            params.innerStretch.get(0).intValue(),
+                            params.innerStretch.get(1).intValue(),
+                            params.innerStretch.get(2).intValue(),
+                            params.innerStretch.get(3).intValue()
+                    );
+                }
+                
+                if (params.outerStretch != null) {
+                    patch.outerStretch(
+                            params.outerStretch.get(0).intValue(),
+                            params.outerStretch.get(1).intValue(),
+                            params.outerStretch.get(2).intValue(),
+                            params.outerStretch.get(3).intValue()
+                    );
+                }
+                
+                anvil.saveTo(fileParam.outFile);
+
+                if (anvil.isSuccessful() && !anvil.equalsInOutFile() && !params.nodelete) {
+                    fileParam.inFile.delete();
+                }
+
+                anvil.printState();
+            }
+        });
+    }
+
+    public static class FileParam {
+        File inFile;
+        File outFile;
+    }
+
+    @Parameters(commandNames = "trim")
+    public static class TrimParams {
+        @Parameter(names = "-in", description = "In Files", variableArity = true, required = true)
+        List<File> inFiles;
+
+        @Parameter(names = "-out", description = "Out Files", variableArity = true)
+        List<File> outFiles;
+
+        @Parameter(names = "-nodelete", description = "No Delete In Files")
+        boolean nodelete;
+
+        public List<FileParam> fileParamList() {
+            int inSize = inFiles.size();
+            int outSize = outFiles == null ? 0 : outFiles.size();
+            if (inSize != outSize && outSize > 0) {
+                throw new RuntimeException("The number of input and output files did not match .");
+            }
+
+            List<FileParam> list = new ArrayList<>(inFiles.size());
+            boolean overwrite = outSize == 0;
+
+            for (int i = 0; i < inFiles.size(); i++) {
+                FileParam file = new FileParam();
+                file.inFile = inFiles.get(i);
+                file.outFile = overwrite ? null : outFiles.get(i);
+                list.add(file);
+            }
+
+            return list;
+        }
+
+        @Override
+        public String toString() {
+            return "TrimParam{" +
+                    "inFiles=" + inFiles +
+                    ", outFiles=" + outFiles +
+                    ", nodelete=" + nodelete +
+                    '}';
+        }
+    }
+
+    @Parameters(commandNames = "nine", commandDescription = "Generate 9-Patched png")
+    public static class NinePatchParams extends TrimParams {
+        @Parameter(names = "-content", arity = 4, description = "Content Padding : <left top right bottom>")
+        List<Integer> contentArea;
+
+        @Parameter(names = "-inner", arity = 4, description = "Inner Stretchable Area : <left top right bottom>")
+        List<Integer> innerStretch;
+
+        @Parameter(names = "-outer", arity = 4, description = "Outer Stretchable Area : <left top right bottom>")
+        List<Integer> outerStretch;
+
+        @Override
+        public String toString() {
+            return "NinePatchParams{" +
+                    "contentArea=" + contentArea +
+                    ", innerStretch=" + innerStretch +
+                    ", outerStretch=" + outerStretch +
+                    '}';
+        }
     }
 }
